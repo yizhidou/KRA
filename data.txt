@@ -1,7 +1,1 @@
-public static byte[] strToByteArray(String str) {
-    if (str == null) {
-        return null;
-    }
-    byte[] byteArray = str.getBytes();
-    return byteArray;
-}
+She had been shopping with her Mom in Wal-Mart. She must have been 6 years old,

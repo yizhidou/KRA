@@ -51,7 +51,7 @@ public class Client {
         int r = -1;
         int ANonce;
         int CNonce;
-        byte[] TK;
+        byte[] TK = null;
         Message msg = new Message();
         msg.type = "Authentication_request";
         while (true) {    
@@ -85,54 +85,68 @@ public class Client {
                 	Msg.type = "Msg4";
                 	Msg.r = r + 1;
                 	Msg.code = "ACK";
-                	Nonce = 0;
-                	
+                	Nonce = 0;	
                 }
                 else if(msg.type.compareTo("data") == 0) {
                 	String cipher;
                 	String plain = "";
                 	
                 	plain = new String(Files.readAllBytes(Paths.get(filename)));
-                	System.out.println(plain);
              
                 	byte[] p_byte = plain.getBytes();
                 	int len = (int)Math.ceil((double)p_byte.length/16);
+                	
+                	byte[] plain_msg = new byte[len * 16];
                 	if(p_byte.length % 16 != 0) {
                 		byte[] padding = new byte[16 - p_byte.length % 16];
-                		System.arraycopy(padding, 0, p_byte, (len - 1)*16 + p_byte.length % 16 - 1, 16 - p_byte.length % 16);
+                		System.arraycopy(p_byte, 0, plain_msg, 0, p_byte.length);
+                		System.arraycopy(padding, 0, plain_msg, p_byte.length, padding.length);
+                	} else {
+                		System.arraycopy(p_byte, 0, plain_msg, 0, p_byte.length);
                 	}
-
+                		
+                	
+                	
                 	for(int i=0; i<len; i++) {
                 		byte[] msg_byte = new byte[16];
-                		System.arraycopy(p_byte, i*16, msg_byte, 0, 16);
-                		byte[] key = Utils.Hash(mac, Nonce);
+                		System.arraycopy(plain_msg, i*16, msg_byte, 0, 16);
+                		System.out.println(Nonce);
+                		System.out.println(Arrays.toString(msg_byte));
+//                		System.out.println(new String(msg_byte));
+                		
+                		byte[] key = Utils.Hash(mac, Nonce, TK);
+//                		System.out.println(Arrays.toString(key));
                 		Nonce++;
                 		cipher = new String(Utils.XOR(msg_byte, key));
                 		Msg.type = "data";
                 		Msg.r = r + 1;
                 		Msg.code = cipher;
                 		
-                		System.out.println(Msg.code);
-                		
-                		oos = new ObjectOutputStream(socket.getOutputStream());
-        				oos.writeObject(Msg);
-        				oos.flush();
-        				Thread.sleep(1000);
+//                		System.out.println(Msg.code);
+//                		System.out.println(Arrays.toString(Msg.code.getBytes()));
+                		try {
+                			oos = new ObjectOutputStream(socket.getOutputStream());
+                        	ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+                        	
+	        				oos.writeObject(Msg);
+	        				oos.flush();
+	        				Thread.sleep(1000);
+                		} catch (Exception e) {
+                			System.out.println("客户端发送异常:" + e.getMessage());
+                		}
         				
-        				ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        				
         				Object obj = ois.readObject();
         				if(obj != null) {
         					Message receive_msg = (Message)obj;
         					msg.type = receive_msg.type;
         					msg.r = receive_msg.r;
         					msg.code = receive_msg.code;
-        					System.out.println("client receive:" + msg.type +"\t"+ msg.r + "\t" + msg.code);
+//        					System.out.println("client receive:" + msg.type +"\t"+ msg.r + "\t" + msg.code);
         				}
-        				
-        				oos.close();
-        				ois.close();
-        				
+   
                 	}
+                	Msg.type = "over";
                 }
                 else if (msg.type.compareTo("OK") == 0) {
                 	System.out.println("客户端将关闭连接");    

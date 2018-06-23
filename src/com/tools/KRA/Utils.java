@@ -21,15 +21,16 @@ public class Utils {
 		return sha;
 	}
 	
-	public static byte[] Hash(byte[] mac, int Nonce) {
+	public static byte[] Hash(byte[] mac, int Nonce, byte[] TK) {
 		byte[] N = toBytes(Nonce);
-		byte[] IV = new byte[N.length + mac.length];
-		System.arraycopy(mac, 0, IV, 0, mac.length);
-		System.arraycopy(N, 0, IV, mac.length, N.length);
+		byte[] d = new byte[N.length + mac.length + TK.length];
+		System.arraycopy(mac, 0, d, 0, mac.length);
+		System.arraycopy(N, 0, d, mac.length, N.length);
+		System.arraycopy(TK, 0, d, N.length + mac.length, TK.length);
 		byte[] sha = null;
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
-			md.update(IV);
+			md.update(d);
 			sha = md.digest();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
