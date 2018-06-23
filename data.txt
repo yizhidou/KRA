@@ -1,0 +1,7 @@
+public static byte[] strToByteArray(String str) {
+    if (str == null) {
+        return null;
+    }
+    byte[] byteArray = str.getBytes();
+    return byteArray;
+}
